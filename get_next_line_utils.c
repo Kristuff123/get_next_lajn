@@ -6,7 +6,7 @@
 /*   By: kgraczyk <kgraczyk@student.42warsaw.pl>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/02 19:25:13 by kgraczyk          #+#    #+#             */
-/*   Updated: 2024/04/02 20:34:20 by kgraczyk         ###   ########.fr       */
+/*   Updated: 2024/04/02 20:40:11 by kgraczyk         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,7 +42,7 @@ char	*ft_strchr(char *s, int c)
 	return (0);
 }
 
-char	*ft_strjoin(char *the_string, char *buffer)
+char	*ft_strjoin(char *the_string, char *buf)
 {
 	size_t	i;
 	size_t	j;
@@ -53,9 +53,9 @@ char	*ft_strjoin(char *the_string, char *buffer)
 		the_string = (char *)malloc(1 * sizeof(char));
 		the_string[0] = '\0';
 	}
-	if (!the_string || !buffer)
+	if (!the_string || !buf)
 		return (NULL);
-	str = malloc(sizeof(char) * ((ft_strlen(the_string) + ft_strlen(buffer)) + 1));
+	str = malloc(sizeof(char) * ((ft_strlen(the_string) + ft_strlen(buf)) + 1));
 	if (str == NULL)
 		return (NULL);
 	i = -1;
@@ -63,9 +63,9 @@ char	*ft_strjoin(char *the_string, char *buffer)
 	if (the_string)
 		while (the_string[++i] != '\0')
 			str[i] = the_string[i];
-	while (buffer[j] != '\0')
-		str[i++] = buffer[j++];
-	str[ft_strlen(the_string) + ft_strlen(buffer)] = '\0';
+	while (buf[j] != '\0')
+		str[i++] = buf[j++];
+	str[ft_strlen(the_string) + ft_strlen(buf)] = '\0';
 	free(the_string);
 	return (str);
 }

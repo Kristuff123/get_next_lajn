@@ -6,7 +6,7 @@
 /*   By: kgraczyk <kgraczyk@student.42warsaw.pl>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/02 19:17:20 by kgraczyk          #+#    #+#             */
-/*   Updated: 2024/04/02 20:36:54 by kgraczyk         ###   ########.fr       */
+/*   Updated: 2024/04/02 20:41:44 by kgraczyk         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,25 +17,25 @@
 
 char	*ft_read_and_join(int fd, char *the_string)
 {
-	char	*buffer;
+	char	*buf;
 	int		read_bytes;
 
-	buffer = malloc((BUFFER_SIZE + 1) * sizeof(char));
-	if (!buffer)
+	buf = malloc((BUFFER_SIZE + 1) * sizeof(char));
+	if (!buf)
 		return (NULL);
 	read_bytes = 1;
 	while (!ft_strchr(the_string, '\n') && read_bytes != 0)
 	{
-		read_bytes = read(fd, buffer, BUFFER_SIZE);
+		read_bytes = read(fd, buf, BUFFER_SIZE);
 		if (read_bytes == -1)
 		{
-			free(buffer);
+			free(buf);
 			return (NULL);
 		}
-		buffer[read_bytes] = '\0';
-		the_string = ft_strjoin(the_string, buffer);
+		buf[read_bytes] = '\0';
+		the_string = ft_strjoin(the_string, buf);
 	}
-	free(buffer);
+	free(buf);
 	return (the_string);
 }
 
