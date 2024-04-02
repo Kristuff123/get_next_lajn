@@ -6,7 +6,7 @@
 /*   By: kgraczyk <kgraczyk@student.42warsaw.pl>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/02 19:17:20 by kgraczyk          #+#    #+#             */
-/*   Updated: 2024/04/02 20:41:44 by kgraczyk         ###   ########.fr       */
+/*   Updated: 2024/04/02 20:47:46 by kgraczyk         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,10 +62,11 @@ int	main(void)
 
 	fd1 = open("tests/test.txt", O_RDONLY);
 	i = 1;
-	while (i < 7)
+	while (i < 2000)
 	{
 		line = get_next_line(fd1);
 		printf("line [%02d]: %s", i, line);
+		printf("\n");
 		free(line);
 		i++;
 	}
