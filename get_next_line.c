@@ -6,7 +6,7 @@
 /*   By: kgraczyk <kgraczyk@student.42warsaw.pl>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/02 19:17:20 by kgraczyk          #+#    #+#             */
-/*   Updated: 2024/04/03 17:58:45 by kgraczyk         ###   ########.fr       */
+/*   Updated: 2024/04/03 18:21:29 by kgraczyk         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,7 @@ char	*ft_read_and_append(int fd, char *the_string)
 		if (read_bytes == -1)
 		{
 			free(buf);
+			free(the_string);
 			return (NULL);
 		}
 		buf[read_bytes] = '\0';
@@ -45,7 +46,7 @@ char	*get_next_line(int fd)
 	static char	*the_string;
 
 	if (fd < 0 || BUFFER_SIZE <= 0)
-		return (0);
+		return (NULL);
 	the_string = ft_read_and_append(fd, the_string);
 	if (!the_string)
 		return (NULL);
