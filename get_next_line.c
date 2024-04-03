@@ -6,7 +6,7 @@
 /*   By: kgraczyk <kgraczyk@student.42warsaw.pl>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/02 19:17:20 by kgraczyk          #+#    #+#             */
-/*   Updated: 2024/04/02 20:47:46 by kgraczyk         ###   ########.fr       */
+/*   Updated: 2024/04/03 17:58:45 by kgraczyk         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 
-char	*ft_read_and_join(int fd, char *the_string)
+char	*ft_read_and_append(int fd, char *the_string)
 {
 	char	*buf;
 	int		read_bytes;
@@ -41,17 +41,17 @@ char	*ft_read_and_join(int fd, char *the_string)
 
 char	*get_next_line(int fd)
 {
-	char		*line;
+	char		*the_line;
 	static char	*the_string;
 
 	if (fd < 0 || BUFFER_SIZE <= 0)
 		return (0);
-	the_string = ft_read_and_join(fd, the_string);
+	the_string = ft_read_and_append(fd, the_string);
 	if (!the_string)
 		return (NULL);
-	line = ft_get_line(the_string);
-	the_string = ft_update_the_string(the_string);
-	return (line);
+	the_line = ft_get_the_line(the_string);
+	the_string = ft_cut_the_string(the_string);
+	return (the_line);
 }
 
 int	main(void)
@@ -62,7 +62,7 @@ int	main(void)
 
 	fd1 = open("tests/test.txt", O_RDONLY);
 	i = 1;
-	while (i < 2000)
+	while (i < 30)
 	{
 		line = get_next_line(fd1);
 		printf("line [%02d]: %s", i, line);

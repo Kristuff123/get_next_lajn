@@ -6,7 +6,7 @@
 /*   By: kgraczyk <kgraczyk@student.42warsaw.pl>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/02 19:25:13 by kgraczyk          #+#    #+#             */
-/*   Updated: 2024/04/02 20:40:11 by kgraczyk         ###   ########.fr       */
+/*   Updated: 2024/04/03 17:57:58 by kgraczyk         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,7 +70,7 @@ char	*ft_strjoin(char *the_string, char *buf)
 	return (str);
 }
 
-char	*ft_get_line(char *the_string)
+char	*ft_get_the_line(char *the_string)
 {
 	int		i;
 	char	*str;
@@ -98,7 +98,7 @@ char	*ft_get_line(char *the_string)
 	return (str);
 }
 
-char	*ft_update_the_string(char *the_string)
+char	*ft_cut_the_string(char *the_string)
 {
 	int		i;
 	int		j;
