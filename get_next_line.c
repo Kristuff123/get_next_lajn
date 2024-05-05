@@ -6,14 +6,11 @@
 /*   By: kgraczyk <kgraczyk@student.42warsaw.pl>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/02 19:17:20 by kgraczyk          #+#    #+#             */
-/*   Updated: 2024/04/03 18:22:43 by kgraczyk         ###   ########.fr       */
+/*   Updated: 2024/05/05 11:52:43 by kgraczyk         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
-#include <unistd.h>
-#include <stdio.h>
-#include <fcntl.h>
 
 char	*ft_read_and_append(int fd, char *the_string)
 {
@@ -63,7 +60,7 @@ int	main(void)
 
 	fd1 = open("tests/test.txt", O_RDONLY);
 	i = 1;
-	while (i < 30)
+	while (i < 1000)
 	{
 		line = get_next_line(fd1);
 		printf("line [%02d]: %s", i, line);
