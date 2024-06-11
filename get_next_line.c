@@ -6,7 +6,7 @@
 /*   By: kgraczyk <kgraczyk@student.42warsaw.pl>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/02 19:17:20 by kgraczyk          #+#    #+#             */
-/*   Updated: 2024/05/05 11:52:43 by kgraczyk         ###   ########.fr       */
+/*   Updated: 2024/06/11 20:24:49 by kgraczyk         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,7 +51,7 @@ char	*get_next_line(int fd)
 	the_string = ft_cut_the_string(the_string);
 	return (the_line);
 }
-
+/*
 int	main(void)
 {
 	char	*line;
@@ -71,3 +71,4 @@ int	main(void)
 	close(fd1);
 	return (0);
 }
+*/
