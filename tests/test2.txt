@@ -1,0 +1,512 @@
+Configuring Yubikeys for SSH Authentication
+Table of Contents
+
+This document explains how to configure a Yubikey for SSH authentication
+Prerequisites
+
+Install Yubikey Personalization Tool and Smart Card Daemon
+
+kali@kali:~$ sudo apt install -y yubikey-personalization scdaemon
+
+Detect Yubikey
+
+First, you’ll need to ensure that your system is fully up-to-date:
+
+kali@kali:~$ pcsc_scan
+Scanning present readers...
+Reader 0: Yubico Yubikey 4 OTP+U2F+CCID 00 00
+  Card state: Card inserted,
+Possibly identified card (using /usr/share/pcsc/smartcard_list.txt):
+    Yubico Yubikey 4 OTP+CCID
+
+Configuration<
+
+In order for our Yubikey to be detected as a smart card, we’ll need to set our Yubikey to CCID mode:
+
+kali@kali:~$ sudo ykpersonalize -m 86
+The USB mode will be set to: 0x86
+
+Commit? (y/n) [n]: y
+
+After this modification, GPG should now be able to recognize our Yubikey as a smart card:
+
+kali@kali:~$ gpg --card-status
+Reader ...........: Yubico Yubikey 4 OTP U2F CCID 00 00
+Version ..........: 2.1
+Manufacturer .....: Yubico
+Key attributes ...: rsa2048 rsa2048 rsa2048
+Max. PIN lengths .: 127 127 127
+PIN retry counter : 3 0 3
+
+Now we will need to change the default PIN that is configured.
+
+The default PIN is 123456 and default admin PIN is 12345678.
+
+kali@kali:~$ gpg --change-pin
+gpg: OpenPGP card no. F8482212202010006041587850000 detected
+
+1 - change PIN
+2 - unblock PIN
+3 - change Admin PIN
+4 - set the Reset Code
+Q - quit
+
+Your selection? 1 # Enter a new PIN
+PIN changed.
+
+1 - change PIN
+
+Your selection? 3 # Enter a new admin PIN
+PIN changed.
+
+Your selection? q
+Enabling Root
+Table of Contents
+Permanent vs temporary usage
+
+There are some cases where you may need to use superuser, root, for an extended period of time. In these cases we can easily access the root account with a simple sudo su (which will ask for the current user’s password), selecting the root terminal icon in the Kali menu, or alternatively using su - (which will ask for the root user’s password) if you have set a password for the root account that you know of. When finished, exit or CTRL+D will take us out of this elevated shell.
+
+However, there may be other times where you may want to use root across multiple sessions without the hassle of elevating privileges. In these situations we will need to install a package and make a few modifications to fully enable the root account for use due to security reasons of keeping the root account disabled by default.
+Enabling the root account
+
+The first thing to do is set a root password, which should be different to the current user’s password (in this case kali). We can do this by doing the following:
+
+kali@kali:~$ sudo passwd
+[sudo] password for kali:
+New password:
+Retype new password:
+passwd: password updated successfully
+kali@kali:~$
+
+Please note that the password prompt will not display output as you are typing in the password, but it will still register the keystrokes.
+
+The next thing we need to decide is if we are wanting to use root via SSH or through the login prompt on whichever desktop environment is installed.
+Enabling root for SSH
+
+If we look at /etc/ssh/sshd_config we will see a PermitRootLogin line. We will want to change this line to match our use case:
+
+kali@kali:~$ grep PermitRootLogin /etc/ssh/sshd_config
+#PermitRootLogin prohibit-password
+# the setting of "PermitRootLogin without-password".
+kali@kali:~$
+kali@kali:~$ man sshd_config | grep -C 1 prohibit-password
+     PermitRootLogin
+             Specifies whether root can log in using ssh(1).  The argument must be yes, prohibit-password, forced-commands-only, or no.  The default
+             is prohibit-password.
+
+             If this option is set to prohibit-password (or its deprecated alias, without-password), password and keyboard-interactive authentication
+             are disabled for root.
+kali@kali:~$
+kali@kali:~$ sudo systemctl restart ssh
+kali@kali:~$
+
+If we have set up SSH key based login for the root account, then we can simply uncomment the appropriate line and continue on. Otherwise, we should change PermitRootLogin to be yes which will allow us to input a password.
+Enabling root for GNOME and KDE login
+
+We will first install kali-root-login to change multiple configuration files that will permit us to login to the root account through the GNOME GDM3 and the KDE login prompt. This step is not necessary when using other desktop environments:
+
+kali@kali:~$ sudo apt -y install kali-root-login
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+The following NEW packages will be installed:
+  kali-root-login
+0 upgraded, 1 newly installed, 0 to remove and 1516 not upgraded.
+Need to get 6,776 B of archives.
+After this operation, 33.8 kB of additional disk space will be used.
+Get:1 http://kali.download/kali kali-rolling/main amd64 kali-root-login all 2019.4.0 [6,776 B]
+Fetched 6,776 B in 1s (10.9 kB/s)
+Selecting previously unselected package kali-root-login.
+(Reading database ... 333464 files and directories currently installed.)
+Preparing to unpack .../kali-root-login_2019.4.0_all.deb ...
+Adding 'diversion of /etc/gdm3/daemon.conf to /etc/gdm3/daemon.conf.original by kali-root-login'
+Adding 'diversion of /etc/pam.d/gdm-password to /etc/pam.d/gdm-password.original by kali-root-login'
+Adding 'diversion of /etc/pam.d/gdm-autologin to /etc/pam.d/gdm-autologin.original by kali-root-login'
+Adding 'diversion of /etc/pam.d/lightdm-autologin to /etc/pam.d/lightdm-autologin.original by kali-root-login'
+Adding 'diversion of /etc/pam.d/sddm to /etc/pam.d/sddm.original by kali-root-login'
+Adding 'diversion of /etc/sddm.conf to /etc/sddm.conf.original by kali-root-login'
+Unpacking kali-root-login (2019.4.0) ...
+Setting up kali-root-login (2019.4.0) ...
+Installing /usr/share/kali-root-login/daemon.conf as /etc/gdm3/daemon.conf
+Installing /usr/share/kali-root-login/gdm-password as /etc/pam.d/gdm-password
+Installing /usr/share/kali-root-login/gdm-autologin as /etc/pam.d/gdm-autologin
+Installing /usr/share/kali-root-login/lightdm-autologin as /etc/pam.d/lightdm-autologin
+Installing /usr/share/kali-root-login/sddm as /etc/pam.d/sddm
+Installing /usr/share/kali-root-login/sddm.conf as /etc/sddm.conf
+kali@kali:~$
+Kali In The Browser (Guacamole)
+
+There are various ways you can interact with Kali, such as sitting down and being direct at the console (more often than not, for a graphic experience), alternatively using Kali remotely via SSH (which gives you command line access). Alternatively, you may have setup VNC which will allow for remote graphical access (please make sure to do this securely by having VNC listen on loopback and port forward via SSH). Another approach would be to interact with Kali in a browser, rather than having to install necessary VNC clients.
+
+This guide covers Apache Guacamole, but we also have another guide noVNC. Each have their pros and cons. Guacamole is a more complete solution, it supports multiple protocols and allows clients to connect to it from a central page with user authentication.
+
+Apache Guacamole is not packaged with Debian, and has various steps to complete its setup (or you can use a docker image). There is a automated script to help the installation process.
+
+The first stage is to download the script:
+
+kali@kali:~$ sudo apt update
+kali@kali:~$
+kali@kali:~$ sudo apt install -y git
+kali@kali:~$
+kali@kali:~$ git clone https://github.com/MysticRyuujin/guac-install.git /tmp/guac-install
+kali@kali:~$
+
+IMPORTANT! If you are in the Eastern time zone, you will have to change to a different one. There is a bug with Apache that does not see EDT as a valid time zone.
+
+To fix this issue, we will change our time zone to be Central time:
+
+kali@kali:~$ sudo rm /etc/localtime
+kali@kali:~$
+kali@kali:~$ sudo ln -s /usr/share/zoneinfo/US/Central /etc/localtime
+
+We are going to do a “standalone” installation, where there isn’t a separate MySQL database host as well as not enabling any MFA (as we are going to hide this behind a SSH tunnel):
+
+kali@kali:~$ cd /tmp/guac-install/
+kali@kali:/tmp/guac-install$ sudo ./guac-install.sh --nomfa --installmysql --mysqlpwd S3cur3Pa$$w0rd --guacpwd P@s$W0rD
+[...]
+Cleanup install files...
+
+Installation Complete
+- Visit: http://localhost:8080/guacamole/
+- Default login (username/password): guacadmin/guacadmin
+***Be sure to change the password***.
+
+kali@kali:/tmp/guac-install$
+
+We can quickly check all the services are happy:
+
+kali@kali:/tmp/guac-install$ systemctl status tomcat9 guacd mysql
+● tomcat9.service - Apache Tomcat 9 Web Application Server
+     Loaded: loaded (/lib/systemd/system/tomcat9.service; enabled; vendor preset: disabled)
+     Active: active (running) since Thu 2020-03-05 17:39:38 GMT; 1min 14s ago
+       Docs: https://tomcat.apache.org/tomcat-9.0-doc/index.html
+   Main PID: 33192 (java)
+      Tasks: 47 (limit: 19107)
+     Memory: 454.8M
+     CGroup: /system.slice/tomcat9.service
+             └─33192 /usr/lib/jvm/default-java/bin/java -Djava.util.logging.config.file=/var/lib/tomcat9/conf/logging.properties -Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager -Djava.a>
+
+● guacd.service - LSB: Guacamole proxy daemon
+     Loaded: loaded (/etc/init.d/guacd; generated)
+     Active: active (running) since Thu 2020-03-05 14:04:34 GMT; 3h 36min ago
+       Docs: man:systemd-sysv-generator(8)
+      Tasks: 1 (limit: 19107)
+     Memory: 11.5M
+     CGroup: /system.slice/guacd.service
+             └─991 /usr/local/sbin/guacd -p /var/run/guacd.pid
+
+Warning: Journal has been rotated since unit was started. Log output is incomplete or unavailable.
+
+● mysql.service - LSB: Start and stop the mysql database server daemon
+     Loaded: loaded (/etc/init.d/mysql; generated)
+     Active: active (running) since Thu 2020-03-05 17:39:46 GMT; 1min 6s ago
+       Docs: man:systemd-sysv-generator(8)
+      Tasks: 34 (limit: 19107)
+     Memory: 88.9M
+     CGroup: /system.slice/mysql.service
+             ├─33670 /bin/sh /usr/bin/mysqld_safe
+             ├─33787 /usr/sbin/mysqld --basedir=/usr --datadir=/var/lib/mysql --plugin-dir=/usr/lib/x86_64-linux-gnu/mariadb19/plugin --user=mysql --skip-log-error --pid-file=/run/mysqld/mysqld.pid --soc>
+             └─33788 logger -t mysqld -p daemon error
+kali@kali:/tmp/guac-install$
+kali@kali:/tmp/guac-install$ sudo ss -antup | grep "mysqld\|guacd\|java"
+tcp    LISTEN  0       80                 127.0.0.1:3306         0.0.0.0:*       users:(("mysqld",pid=33787,fd=21))
+tcp    LISTEN  0       5                  127.0.0.1:4822         0.0.0.0:*       users:(("guacd",pid=991,fd=4))
+tcp    LISTEN  0       100                        *:8080               *:*       users:(("java",pid=33192,fd=36))
+kali@kali:/tmp/guac-install$
+
+All the services are up and running correctly.
+
+Next is to enable VNC service on Kali.
+
+We are going to use TigerVNC:
+
+kali@kali:~$ sudo apt install -y tigervnc-standalone-server
+kali@kali:~$
+kali@kali:~$ mkdir -p ~/.vnc/
+kali@kali:~$
+kali@kali:~$ wget https://gitlab.com/kalilinux/nethunter/build-scripts/kali-nethunter-project/-/raw/master/nethunter-fs/profiles/xstartup -O ~/.vnc/xstartup
+kali@kali:~$
+kali@kali:~$ vncserver :1
+
+Next we are going to go to the guacamole admin panel and create a new connection.
+
+First we click “Settings” in the upper right drop-down menu
+
+Next we will click on the “Connections” tab and click “New connection”. We will populate these the fields below:
+
+We make sure to set “Color depth” as we do so the colors come through properly. If set wrongly, some of the greys can turn purple or other colors.
+
+With all that done, you can go “Home” from the upper right drop-down and click on the new connection.Kali In The Browser (noVNC)
+
+There are various ways you can interact with Kali, such as sitting down and being direct at the console (more often than not, for a graphic experience), alternatively using Kali remotely via SSH (which gives you command line access). Alternatively, you may have setup VNC which will allow for remote graphical access (please make sure to do this securely by having VNC listen on loopback and port forward via SSH). Another approach would be to interact with Kali in a browser, rather than having to install necessary VNC clients.
+
+This guide covers noVNC, but we also have another guide for Apache Guacamole. Each have their pros and cons. NoVNC is a lighter approach, as it has less services required (less overhead), which allows for a quick “one off connection” solution.
+
+First we update, then install the necessary packages (we have chosen x11vnc as our VNC solution. You can switch it for any VNC servicer you wish. Support may vary however.):
+
+kali@kali:~$ sudo apt update
+kali@kali:~$
+kali@kali:~$ sudo apt install -y novnc x11vnc
+kali@kali:~$
+
+Next we start up a VNC session. We have chosen to do this only on loopback, making it more secure (We are skipping x11vnc’s in-built HTTP function. That requires Java, and we don’t want to install it on any of our clients as noVNC gives a HTML5 experience):
+
+kali@kali:~$ x11vnc -display :0 -autoport -localhost -nopw -bg -xkb -ncache -ncache_cr -quiet -forever
+
+The VNC desktop is:      localhost:0
+PORT=5900
+kali@kali:~$
+
+NOTE: We are using display :0 which is our current desktop.
+
+We can double check which port is being used for VNC:
+
+kali@kali:~$ ss -antp | grep vnc
+LISTEN    0         32                127.0.0.1:5900            0.0.0.0:*        users:(("x11vnc",pid=8056,fd=8))
+LISTEN    0         32                    [::1]:5900               [::]:*        users:(("x11vnc",pid=8056,fd=9))
+kali@kali:~$
+
+We can see it is using port 5900.
+
+Afterwards we get noVNC running (this will open 8081/TCP):
+
+kali@kali:~$ /usr/share/novnc/utils/novnc_proxy --listen 8081 --vnc localhost:5900
+
+Better yet, enable SSH:
+
+kali@kali:~$ sudo systemctl enable ssh --now
+kali@kali:~$
+
+Then on the remote box, SSH into your Kali setup (you may need to enable port forwarding first)
+
+$ ssh kali@192.168.13.37 -L 8081:localhost:8081
+
+Kali Linux Forensics Mode
+
+Kali Linux “Live” provides a “forensic mode”, a feature first introduced in BackTrack Linux. The “Forensic mode live boot” option has proven to be very popular for several reasons:
+
+    Kali Linux is widely and easily available, many potential users already have Kali ISOs or bootable USB drives.
+    When a forensic need comes up, Kali Linux “Live” makes it quick and easy to put Kali Linux on the job.
+    Kali Linux comes pre-loaded with the most popular open source forensic software, a handy toolkit when you need to do forensic work.
+
+When booted into the forensic boot mode, there are a few very important changes to the regular operation of the system:
+
+    First, the internal hard disk is never touched. If there is a swap partition it will not be used and no internal disk will be auto mounted. We verified this by first taking a standard system and removing the hard drive. A hash was taken of the drive using a commercial forensic package. We then reattached the drive to the computer and booted Kali Linux “Live” in forensic mode. After using Kali for a period of time, we then shut the system down, removed the hard drive, and took the hash again. These hashes matched, indicating that at no point was anything changed on the drive in any way.
+
+    The other, equally important, change is that auto-mounting of removable media is disabled. USB thumb drives, CDs, and the like will not be auto-mounted when inserted. The idea behind this is simple: in forensic mode, nothing should happen to any media without direct user action. Anything that you do as a user is on you.
+
+If you plan on using Kali for real world forensics of any type, we recommend that you don’t just take our word for any of this. All forensic tools should always be validated to ensure that you know how they will behave in any circumstance in which you are going to be using them. Finally, while Kali continues to focus on providing the best collection of open source penetration testing tools available, it is always possible that we may have missed your favorite open source forensic tool. If so, let us know! We are always on the lookout of high quality open source tools that we can add to Kali to make it even better.Kali Training
+What is Kali Training?
+
+Kali Training is the official site for the book all about Kali – Kali Linux Revealed. Kali Training will allow you to go through the book’s material and take practice exams to test your knowledge on chapters from the book. The book covers topics from installing Kali and what the base requirements are all the way to recompiling the kernel.
+
+Users are encouraged to read and complete the practice exams to gain useful knowledge on many aspects of Kali Linux. Everyday tasks can be quickened, issues that pop up can be pinpointed and potentially corrected easier, and a good understanding of what is happening beneath the surface is all able to be gained with completion of the book.
+What can I do next?
+
+After completing all of Kali Training and the practice test, there is a following certificate that can be achieved. The Kali Linux Certified Profession (KLCP) certificate is a recognition that you are knowledgeable in Kali Linux, many Linux fundamentals, and certain more advanced features of Linux
+Kali's Domains
+
+Kali has quite a few subdomains that may be useful to know about:
+
+    https://www.kali.org/: The official website of Kali Linux! Users can find links to downloads, the blog, training, documentation, and more.
+    https://www.kali.org/docs/: This is the home of the official documentation for Kali Linux. Users can find documentation from the initial installation to how to create a LUKS nuke capable live USB.
+    https://www.kali.org/tools: Many questions related to packages can be answered by browsing this site. This site and pkg.kali.org store much of the information on versions of packages, what tools are in which metapackages, the man pages of tools, and more. Tools lists information on the use case of a tool.
+    https://kali.training/: New or experienced users of Kali may wish to gain a greater knowledge of Kali, which is covered in this site. Kali Training lets users go through the Kali Linux Revealed book and complete practice tests associated with the content of chapters. This is all to prepare for the KLCP (Kali Linux Certified Professional) exam.
+    https://bugs.kali.org/: Any time a user has an issue that is sure to be a bug, they should report that bug here to our bug tracker.
+    https://forums.kali.org/: A site where users can go to when in need of assistance. Issues related to hardware, software, and general information related to Kali is discussed with the help of other community members.
+    https://autopkgtest.kali.org/: Many packages have a test that is associated with it to ensure that they run. This site shows all of those tests and whether they pass or fail.
+    https://pkg.kali.org/: The counterpart of https://www.kali.org/tools and very useful for users to see the history of a package. Along with the history users can see the associated binaries, upstream, the package in Kali’s git repo, and more. Another useful feature to know about is the ability to track package versions, which can be done via email or RSS feed. This is well explained at Debian’s documentation on the software.
+    http://old.kali.org/: If for any reason a user needs an old copy of Kali Linux, then this is the site for them. Images from some of the first Kali releases can be found as well as more recent releases.
+    https://http.kali.org/: A redirector url for the mirrors Kali has available. This should point to your closest mirror.
+    https://kali.download: A mirror that utilizes Cloudflare’s content delivery network (CDN).
+    https://cdimage.kali.org/: A server that hosts the ISO’s for download.
+    https://status.kali.org/: Should any site be down for you, you can check their status here.
+
+Kernel Configuration
+Table of Contents
+
+The Kali Linux kernel differs slightly from the “usual” kernel. For the purposes of penetration testing, we chose to use some defaults that differ from general-purpose Linux distributions, and we also patch the kernel here and there. This page will document these changes.
+
+Default values can be modified via the tool kali-tweaks, but patches can’t be undone without generating a new kernel.
+
+Beside each header will call out if the configuration is a kernel patch or if the behavior was modified by sysctl. If you would like to explore these kernel patches for yourself, you can find them here, on our GitLab.
+WiFi injection (Patch)
+
+We supply a WiFi injection patch to help with WiFi-based penetration testing.
+dmesg unrestricted (sysctl)
+
+The kernel logs are unrestricted by default, meaning that any unprivileged user can run the command dmesg and inspect the kernel logs (also called the “kernel ring buffer”). If you would prefer dmesg to remain a privileged command, you can use kali-tweaks to restore this behavior.
+Privileged ports (sysctl)
+
+Traditionally, IPv4 ports below 1024 are called “privileged ports,” and can only be used by the privileged user. In Kali Linux, this is disabled by default, meaning that all ports are “unprivileged,” or in other words any user can run a program that binds to any port, even below 1024.
+
+This was done as Kali is no longer root user by default, and with a non-root user some tools, such as netcat or Metasploit, may be trying to use ports that would require privilege. This should cut-down on the need to run sudo as often. If you would like to leave ports 1024 and below as privileged, this can be done through kali-tweaks.
+Misc (Patches)
+
+    Enable sniffer mode for carl9170 cards
+    Adds touchscreen support for Odroid VU7 devices
+	OpenSSL Configuration
+
+Since our release of Kali Linux 2021.3 OpenSSL has been configured for wider compatibility to allow Kali to talk to as many services as possible. This means that legacy protocols (such as TLS 1.0 and TLS 1.1) and older ciphers are enabled by default. This is a change from standard behavior, as these are disabled to enforce communication over more secure channels. As a result of this change tools used inside of Kali will be able to communicate using these outdated methods. This is done to help increase Kali’s ability to talk to older, obsolete systems and servers that are still using these older protocols. Older services using this may be at end of life, thus increasing the chances of discovering vulnerabilities or other problems.
+
+However, if you would rather keep your communication as secure as possible using today’s modern standards, you can enable the Strong Security mode.
+
+These settings can be changed easily using the kali-tweaks tool. Simply:
+
+    Open a terminal and run kali-tweaks.
+    From there, select the Hardening menu.
+    Now you can choose between Wide Compatibility (the default) and Strong Security.
+
+Note: This is achieved by changing the OpenSSL configuration through /etc/ssl/openssl.cnf and /etc/ssl/kali.cnf, so while it can restore access to some legacy services, it will not allow access to servers running protocols that are no longer compiled in the libssl library (for example SSLv3).
+Packages That Behave Differently With Non-root
+Table of Contents
+
+There are many packages that require privileged access to use. There are also packages that may run without privileged access but lose some of their functionality. This page will be continually updated to include any tools that fall under the latter.
+Nmap
+
+Nmap is one of the most common tools that may have issues running non-root vs root. Nmap has many different scanning techniques that have a different function and utilize different methods to get results. One example of this is with the TCP SYN scan which utilizes raw sockets which are only available to the root user. This scan is the default when you are a privileged user, otherwise the TCP connect scan is the default.
+
+The difference between these two scans is well explained in the official Nmap port scanning techniques page. A short breakdown is that the SYN scan ends the handshake early, while the connect scan completes it completely. Each has their own benefits or setbacks, so it is good to understand what is happening with each.
+
+Updated on: 2023-Jul-06
+Samba Configuration
+
+Since our release of Kali Linux 2021.4, the Samba client has been configured for wider compatibility to allow Kali to talk to as many Samba servers as possible. This means that legacy protocols (such as LANMAN1, LANMAN2 and NT1) are enabled by default. This is a change from standard behavior, as these are disabled to enforce communication over more secure channels. As a result of this change tools used inside of Kali will be able to communicate using these outdated methods. This is done to help increase Kali’s ability to talk to older, obsolete Samba servers that are still using these older protocols. Older services using this may be at end of life, thus increasing the chances of discovering vulnerabilities or other problems.
+
+However, if you would rather keep Samba as secure as possible using today’s modern standards, you can enable the Strong Security mode.
+
+These settings can be changed easily using the kali-tweaks tool. Simply:
+
+    Open a terminal and run kali-tweaks.
+    From there, select the Hardening menu.
+    Now you can choose between Wide Compatibility (the default) and Strong Security.
+
+Note: This is achieved by changing the setting client min protocol in the Samba configuration file /etc/samba/smb.conf.
+Kali Linux Xfce FAQ
+Table of Contents
+
+The new Kali Linux Desktop is incredibly fast and absolutely gorgeous. Here are some tips and tricks to help you find your way around it quickly.
+Topics
+
+    Desktop Environments, Switching
+    HiDPI
+    Theme
+    Terminal not showing up
+    Language Settings
+    Feedback
+
+
+Switch Desktop Environments
+
+Q: I absolutely love the new theme and I desperately want it, but without having to re-install my system. How can I migrate my existing Kali Linux installation?
+
+A: Run sudo apt update && sudo apt install -y kali-desktop-xfce in a terminal session to install the new Kali Linux Xfce environment. When asked to select the “Default display manager”, choose lightdm.
+
+Next, run update-alternatives --config x-session-manager and select Xfce’s option. If you would also like to remove the Gnome window manager, which we do not recommend until you are sure you are ready to, run apt purge --autoremove kali-desktop-gnome. Be sure to run this after setting up Xfce.
+
+Next time you login after a reboot you will have the Xfce theme, if you did not run the update-alternatives command you can choose “Xfce” in the session selector in the top right hand corner of the login screen.
+
+
+
+Q: I installed Xfce, but it doesn’t look like the preview. How can I get it to look the same?
+
+A: If you are having issues, it may be that a config file is not set properly. First, backup .cache, .config, and .local. Next, running rm -r .cache .config .local and then rebooting will likely fix those issues.
+
+
+
+Q: How can I get a Kali Linux image with GNOME instead of Xfce?
+
+A: Just download the Kali GNOME image from kali.org/downloads/
+
+
+
+Q: I tried Xfce and I really like it but I still would like to switch back to GNOME. How can I do that?
+
+A: You can run sudo apt update && sudo apt install -y kali-desktop-gnome in a terminal session. Next time you login you can choose “GNOME” in the session selector in the top right hand corner of the login screen.
+
+
+HiDPI
+
+Q: I have a HiDPI screen and everything looks tiny. Is there a way to improve that?
+
+A: Please see our HiDPI page
+
+
+Screen Captures
+
+Q: How can I take screenshots?
+
+A: Press the Print Screen key on your keyboard will launch screenshooter. Pressing enter will take the screenshot. Alternatively you can click on the “Screen-Recorder” icon in the quick-launch panel (the far right icon in the panel next to the application menu) and choose “Screenshot”.
+
+
+
+Q: How can I record videos of my screen activity?
+
+A: Pressing Ctrl & Print Screen on your keyboard will launch the screen recorder. Pressing Enter will start recording. Alternatively you can click on the “Screen-Recorder” icon in the quick-launch panel (the far right icon in the panel next to the application menu).
+
+
+Theme
+
+Q: How can I switch to a lighter, brighter theme?
+
+A: Kali Linux provides two default themes: dark and light. To switch to the light theme, go to “Settings -> Appearance” and:
+
+    - In the “Style” tab, select “Kali-Light”     - In the “Icons” tab, select “Flat-Remix-Blue-Light”
+
+go to “Settings -> Window Manager” and:
+
+     - In the “Style” tab, select “Kali-Light”
+
+To switch from “Light” to “Dark”, just select the Dark themes in these settings.
+
+
+
+Q: I love the buttons on the right hand side, but I’d love them even more on the the left. How can I switch?
+
+A: You can move the buttons from one side to the other in “Settings -> Window Manager-> Style -> Button Layout”. Just drag and drop them to the other side of the word “Title”.
+
+
+No Terminal Showing Up
+
+Q: When I try to launch the terminal, the window shows up, but the contents are empty, what gives?
+
+A: There may be an issue with your graphics and the xfwm4 compositor in use. To disable the compositor, go to “Settings -> Window Manager Tweaks” from the main menu on the desktop and:
+
+     - In the “Compositor” tab, uncheck Enable display compositing
+
+If you want a compositor still, and the xfwm4 compositor isn’t working for you, you can use an alternative like “compton”.
+
+     - sudo apt install -y compton
+
+Then to have it auto run at login, go to “Settings -> Session and Startup” and:
+
+      - In the “Application Autostart” tab, click “Add” and enter “Compton” for the name, and “compton” for the Command, then click “OK”, log out, and back in.
+
+Alternatively, if this issue is occurring in a VM disable 3D acceleration in the VM settings.
+
+
+Language Settings
+
+Q: How can I change the GUI language?
+
+A: In the LightDM login screen, select the desired language using the language selector on the right hand side of the top panel.
+
+
+
+Q: How can I change my keyboard layout?
+
+A: The keyboard layout can be changed in “Settings -> Keyboard -> Layout”
+
+
+
+Q: How can I setup a different input method not available through “Settings -> Keyboard -> Layout”, e.g. Japanese (Anthy)?
+
+A: You can install ibus to configure different input methods, for Anthy you also have to install ibus-anthy, i.e. via
+
+sudo apt install -y ibus ibus-anthy
+
+You can now add and configure various input methods through “Settings -> iBus Preferences”. Once configured, you can use the newly added “iBus” icon on the right hand side of the panel to select the preferred input method. For a list of available input method engines, refer to:
+
+https://en.wikipedia.org/w/index.php?title=Intelligent_Input_Bus#Available_input_method_plugins_and_engines
+
+ .
