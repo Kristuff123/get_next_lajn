@@ -6,7 +6,7 @@
 /*   By: kgraczyk <kgraczyk@student.42warsaw.pl>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/02 19:17:20 by kgraczyk          #+#    #+#             */
-/*   Updated: 2024/06/26 21:47:09 by kgraczyk         ###   ########.fr       */
+/*   Updated: 2024/06/26 21:49:53 by kgraczyk         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,36 +51,3 @@ char	*get_next_line(int fd)
 	the_string = ft_cut_the_string(the_string);
 	return (the_line);
 }
-/*
-int	main(void)
-{
-	char	*line;
-	int		i;
-	int		fd1;
-
-	fd1 = open("tests/test.txt", O_RDONLY);
-	i = 1;
-	while (i < 1000)
-	{
-		line = get_next_line(fd1);
-		printf("line [%02d]: %s", i, line);
-		printf("\n");
-		free(line);
-		i++;
-	}
-	close(fd1);
-
-	fd1 = open("tests/test2.txt", O_RDONLY);
-	i = 1;
-	while (i < 50)
-	{
-		line = get_next_line(fd1);
-		printf("line [%02d]: %s", i, line);
-		printf("\n");
-		free(line);
-		i++;
-	}
-	close(fd1);
-	return (0);
-}
-*/
